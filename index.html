@@ -3,16 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Static Site</title>
+  <title>Browser Karaoke Lab</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+  <header>
+    <h1>Browser Karaoke Lab</h1>
+    <p>Upload a song, analyze the melody, then sing along with your mic.</p>
+  </header>
+
   <main>
-    <h1>Welcome to Your Static Site</h1>
+    <section class="panel" aria-labelledby="upload-title">
+      <h2 id="upload-title">1. Upload song</h2>
+      <p class="help-text">Choose an audio file (MP3, WAV, etc.). Everything stays in your browser.</p>
+      <label class="file-label">
+        <input id="song-file" type="file" accept="audio/*" />
+        <span>Select audio file</span>
+      </label>
+      <p class="file-name" id="file-name">No file selected yet.</p>
+      <button id="analyze-btn" disabled>Analyze melody</button>
+      <p class="status" id="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="chart-title">
+      <h2 id="chart-title">2. Melody chart</h2>
+      <p class="help-text">After analysis, you'll see a rough melody curve extracted from the song.</p>
+      <canvas id="pitch-canvas" width="700" height="220" aria-label="Pitch chart"></canvas>
+    </section>
+
+    <section class="panel" aria-labelledby="sing-title">
+      <h2 id="sing-title">3. Sing and get a score</h2>
+      <p class="help-text">When you're ready, the song will play and the app will listen to your voice via the microphone.</p>
+
+      <audio id="player" controls></audio>
+
+      <div class="controls-row">
+        <button id="start-singing-btn" disabled>Play &amp; start singing</button>
+        <button id="stop-singing-btn" disabled>Stop</button>
+      </div>
+
+      <div class="score" id="score">Score: –</div>
+      <p class="hint">Scoring is intentionally forgiving: being roughly in tune most of the time is enough for a good score.</p>
+    </section>
   </main>
+
   <footer>
-    <p>&copy; 2025 Your Name</p>
+    <p>&copy; 2025 Browser Karaoke Demo. Audio is processed locally; no backend required.</p>
   </footer>
+
   <script src="assets/script.js"></script>
 </body>
 </html>
