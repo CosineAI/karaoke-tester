@@ -51,8 +51,8 @@
   let hitFrames = 0;
 
   const DEMO_SONG = {
-    url: 'https://samplelib.com/lib/preview/mp3/sample-15s.mp3',
-    label: 'SampleLib 15s demo (instrumental)'
+    url: 'assets/The Weeknd - Blinding Lights (Official Audio).mp3',
+    label: 'Local demo: The Weeknd - Blinding Lights (file in assets folder)'
   };
 
   function formatTime(sec) {
