@@ -66,7 +66,7 @@
   }
 
   function detectPitch(frame, sampleRate) {
-    // Basic autocorrelation-based pitch detector.
+    // Basic autocorrelation-based pitch detector, tuned for human vocals.
     const size = frame.length;
     let rms = 0;
     for (let i = 0; i < size; i++) {
@@ -74,7 +74,7 @@
       rms += v * v;
     }
     rms = Math.sqrt(rms / size);
-    if (rms < 0.01) return null; // too quiet / silence
+    if (rms < 0.015) return null; // too quiet / likely background only
 
     const corr = new Float32Array(size);
     for (let lag = 0; lag < size; lag++) {
@@ -102,7 +102,8 @@
     if (maxIndex <= 0) return null;
 
     const freq = sampleRate / maxIndex;
-    if (freq < 60 || freq > 2000) return null;
+    // Focus on typical vocal fundamental range to avoid drums / cymbals.
+    if (freq < 80 || freq > 1000) return null;
     return freq;
   }
 
@@ -117,7 +118,6 @@
     const len = channelData.length;
 
     const frame = new Float32Array(frameSize);
-    let frameIndex = 0;
 
     for (let offset = 0; offset + frameSize < len; offset += hopSize) {
       for (let i = 0; i < frameSize; i++) {
@@ -129,9 +129,43 @@
         const time = offset / sampleRate;
         track.push({ time, midi });
       }
-      frameIndex++;
     }
     return track;
+  }
+
+  // Run the audio through a very simple vocal-focused filter stage in an
+  // OfflineAudioContext before pitch extraction. This won't perfectly
+  // isolate vocals, but it tends to down‑weight low drums and bright
+  // cymbals so the detector locks onto human voice more often.
+  async function createVocalFocusedBuffer(buffer) {
+    try {
+      const channels = buffer.numberOfChannels;
+      const length = buffer.length;
+      const sampleRate = buffer.sampleRate;
+
+      const offline = new OfflineAudioContext(channels, length, sampleRate);
+      const src = offline.createBufferSource();
+      src.buffer = buffer;
+
+      const highpass = offline.createBiquadFilter();
+      highpass.type = "highpass";
+      highpass.frequency.value = 80; // remove very low rumble / kick
+
+      const lowpass = offline.createBiquadFilter();
+      lowpass.type = "lowpass";
+      lowpass.frequency.value = 1200; // reduce very bright content
+
+      src.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(offline.destination);
+
+      src.start(0);
+      return await offline.startRendering();
+    } catch (e) {
+      // If OfflineAudioContext or filters fail, fall back to the original.
+      console.warn("Vocal-focused filtering unavailable, using raw buffer", e);
+      return buffer;
+    }
   }
 
   function drawPitchTrack(track, currentTime = 0) {
@@ -270,7 +304,11 @@
       const ac = ensureAudioContext();
       const arrayBuffer = await file.arrayBuffer();
       decodedBuffer = await ac.decodeAudioData(arrayBuffer);
-      pitchTrack = buildPitchTrackFromBuffer(decodedBuffer);
+
+      // Run the decoded audio through a simple vocal-focused filter chain
+      // (high‑pass + low‑pass) in an OfflineAudioContext before pitch tracking.
+      const vocalBuffer = await createVocalFocusedBuffer(decodedBuffer);
+      pitchTrack = buildPitchTrackFromBuffer(vocalBuffer);
 
       if (!pitchTrack.length) {
         setStatus(
