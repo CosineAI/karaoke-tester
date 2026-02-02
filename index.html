@@ -3,16 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Static Site</title>
+  <title>Karaoke Lab</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+  <header>
+    <h1>Karaoke Lab</h1>
+    <p class="subtitle">Upload a track, sing along, and see how close you are to the melody.</p>
+  </header>
+
   <main>
-    <h1>Welcome to Your Static Site</h1>
+    <section class="panel" id="upload-panel">
+      <h2>1. Choose a song</h2>
+      <label class="file-input-label">
+        <span>Select audio file</span>
+        <input type="file" id="audio-file" accept="audio/*">
+      </label>
+      <p class="hint">Works best with clear vocals. The analysis runs entirely in your browser.</p>
+      <p id="analysis-status" class="status">No file loaded.</p>
+    </section>
+
+    <section class="panel" id="controls-panel">
+      <h2>2. Analyse &amp; play</h2>
+      <div class="controls-row">
+        <button id="analyze-btn" disabled>Analyse track</button>
+        <button id="play-btn" disabled>Play</button>
+        <button id="stop-btn" disabled>Stop</button>
+      </div>
+      <div class="controls-row small">
+        <button id="mic-btn" disabled>Enable microphone</button>
+        <span id="mic-status" class="status status-inline">Mic off</span>
+      </div>
+      <div class="progress-row">
+        <label>
+          Position
+          <input type="range" id="seek-slider" min="0" max="0" value="0" step="0.01" disabled>
+        </label>
+        <span id="time-label">00:00 / 00:00</span>
+      </div>
+    </section>
+
+    <section class="panel" id="chart-panel">
+      <h2>3. Sing along</h2>
+      <p class="hint">The chart shows only the next 10 seconds. The ♪ icon is your current note.</p>
+      <canvas id="pitch-canvas" width="800" height="260"></canvas>
+      <div class="legend">
+        <span class="legend-song"></span> Song melody
+        <span class="legend-you"></span> Your note (♪)
+      </div>
+      <div class="score-row">
+        <div id="score-main">Score: 0%</div>
+        <div id="score-detail">Start singing to begin scoring.</div>
+      </div>
+    </section>
+
+    <section class="panel" id="lyrics-panel">
+      <h2>Lyrics (optional bonus)</h2>
+      <p class="hint">Enter artist &amp; title and I will try to fetch lyrics. If it fails, you can paste them manually.</p>
+      <div class="lyrics-form">
+        <input type="text" id="lyrics-artist" placeholder="Artist" autocomplete="off">
+        <input type="text" id="lyrics-title" placeholder="Song title" autocomplete="off">
+        <button id="lyrics-fetch-btn">Fetch lyrics</button>
+      </div>
+      <p id="lyrics-status" class="status small">No lyrics loaded.</p>
+      <textarea id="lyrics-text" rows="10" placeholder="Lyrics will appear here, or you can paste them yourself."></textarea>
+    </section>
   </main>
+
   <footer>
-    <p>&copy; 2025 Your Name</p>
+    <p>&copy; 2025 Karaoke Lab</p>
   </footer>
+
   <script src="assets/script.js"></script>
 </body>
 </html>

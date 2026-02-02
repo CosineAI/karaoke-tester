@@ -59,3 +59,211 @@ footer {
   }
 
 }
+
+/* Karaoke-specific styles */
+header {
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+  background: transparent;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 0.04em;
+}
+
+.subtitle {
+  margin-top: 0.4rem;
+  color: #586174;
+  font-size: 0.98rem;
+}
+
+.panel {
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,0.06);
+  padding: 1.4rem 1.5rem 1.5rem;
+  margin-bottom: 1.4rem;
+  background: #fdfdff;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.hint {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 0.92rem;
+  cursor: pointer;
+  margin-top: 0.4rem;
+}
+
+.file-input-label input[type="file"] {
+  display: none;
+}
+
+.status {
+  margin-top: 0.4rem;
+  color: #4b5563;
+  font-size: 0.88rem;
+}
+
+.status-inline {
+  margin-left: 0.6rem;
+}
+
+.status.small {
+  font-size: 0.8rem;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.controls-row.small {
+  font-size: 0.9rem;
+}
+
+button {
+  border-radius: 999px;
+  border: none;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 2px 6px rgba(37,99,235,0.35);
+}
+
+button:disabled {
+  background: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+button#stop-btn {
+  background: #ef4444;
+  box-shadow: 0 2px 6px rgba(239,68,68,0.35);
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+}
+
+#seek-slider {
+  width: 210px;
+}
+
+#pitch-canvas {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,0.7);
+  background: radial-gradient(circle at top left, #f9fafb, #e5e7eb);
+  display: block;
+  box-shadow: inset 0 1px 3px rgba(15,23,42,0.16);
+}
+
+.legend {
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  color: #4b5563;
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+}
+
+.legend-song,
+.legend-you {
+  display: inline-block;
+  width: 18px;
+  height: 4px;
+  border-radius: 999px;
+  margin-right: 0.4rem;
+}
+
+.legend-song {
+  background: #1d4ed8;
+}
+
+.legend-you {
+  background: #10b981;
+}
+
+.score-row {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+#score-main {
+  font-weight: 600;
+}
+
+#score-detail {
+  font-size: 0.86rem;
+  color: #4b5563;
+}
+
+.lyrics-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.lyrics-form input[type="text"] {
+  flex: 1 1 140px;
+  padding: 0.4rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.9);
+  font-size: 0.9rem;
+}
+
+#lyrics-text {
+  width: 100%;
+  margin-top: 0.3rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148,163,184,0.9);
+  padding: 0.5rem 0.6rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+#time-label {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .controls-row {
+    flex-wrap: wrap;
+  }
+
+  #seek-slider {
+    width: 160px;
+  }
+}
