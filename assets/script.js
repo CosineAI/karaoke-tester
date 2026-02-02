@@ -23,6 +23,7 @@
   let micStream = null;
   let micSource = null;
   let scriptNode = null;
+  let chartAnimationId = null;
 
   let scoring = {
     totalFrames: 0,
@@ -129,7 +130,7 @@
     return track;
   }
 
-  function drawPitchTrack(track) {
+  function drawPitchTrack(track, currentTime = 0) {
     const w = canvas.width;
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
@@ -144,8 +145,9 @@
       return;
     }
 
-    const minTime = track[0].time;
-    const maxTime = track[track.length - 1].time;
+    const firstTime = track[0].time;
+    const lastTime = track[track.length - 1].time;
+    const totalDuration = Math.max(1, lastTime - firstTime);
 
     let minMidi = Infinity;
     let maxMidi = -Infinity;
@@ -154,13 +156,16 @@
       if (p.midi > maxMidi) maxMidi = p.midi;
     }
 
-    if (!isFinite(minMidi) || !isFinite(maxMidi) || maxTime <= minTime) {
+    if (!isFinite(minMidi) || !isFinite(maxMidi)) {
       return;
     }
 
     const padding = 20;
+    const viewWidth = w - 2 * padding;
+    const pxPerSecond = viewWidth / totalDuration;
 
-    ctx.strokeStyle = "#94a3b8";
+    // Vertical grid lines (simple time markers)
+    ctx.strokeStyle = "rgba(148,163,184,0.5)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padding, padding);
@@ -168,20 +173,40 @@
     ctx.lineTo(w - padding, h - padding);
     ctx.stroke();
 
+    // Scrolling melody: keep "now" near the left so you see what's coming.
+    const nowX = padding + viewWidth * 0.18;
+    const offsetX = nowX - currentTime * pxPerSecond;
+
     ctx.strokeStyle = "#2563eb";
     ctx.lineWidth = 2;
     ctx.beginPath();
 
-    track.forEach((p, idx) => {
-      const x = padding + ((p.time - minTime) / (maxTime - minTime)) * (w - 2 * padding);
+    let started = false;
+    track.forEach((p) => {
+      const x = offsetX + p.time * pxPerSecond;
+      if (x < padding - 5 || x > w - padding + 5) {
+        return;
+      }
       const y =
         h -
         padding -
         ((p.midi - minMidi) / Math.max(1, maxMidi - minMidi)) * (h - 2 * padding);
-      if (idx === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else {
+        ctx.lineTo(x, y);
+      }
     });
 
+    ctx.stroke();
+
+    // Playhead showing "this is what you should sing right now".
+    ctx.strokeStyle = "rgba(15,23,42,0.55)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(nowX, padding);
+    ctx.lineTo(nowX, h - padding);
     ctx.stroke();
   }
 
@@ -232,7 +257,7 @@
         return;
       }
 
-      drawPitchTrack(pitchTrack);
+      drawPitchTrack(pitchTrack, 0);
       setStatus(
         `Analysis complete. Found ${pitchTrack.length} pitch samples over ${decodedBuffer.duration.toFixed(
           1
@@ -324,6 +349,18 @@
     scriptNode.connect(ac.destination);
 
     audioEl.currentTime = 0;
+
+    if (chartAnimationId != null) {
+      cancelAnimationFrame(chartAnimationId);
+      chartAnimationId = null;
+    }
+    const animateChart = () => {
+      if (!pitchTrack.length) return;
+      drawPitchTrack(pitchTrack, audioEl.currentTime || 0);
+      chartAnimationId = requestAnimationFrame(animateChart);
+    };
+    chartAnimationId = requestAnimationFrame(animateChart);
+
     audioEl.play().catch((err) => {
       console.error(err);
       setStatus("Could not start playback. Try clicking the audio controls first.", true);
@@ -334,6 +371,11 @@
   }
 
   function stopSinging() {
+    if (chartAnimationId != null) {
+      cancelAnimationFrame(chartAnimationId);
+      chartAnimationId = null;
+    }
+
     if (scriptNode && micSource) {
       micSource.disconnect(scriptNode);
       scriptNode.disconnect();
@@ -355,6 +397,10 @@
       setScoreText(`Score: ${percentage} / 100`);
     } else {
       setScoreText("Score: – (not enough data)");
+    }
+
+    if (pitchTrack.length) {
+      drawPitchTrack(pitchTrack, audioEl.currentTime || 0);
     }
   }
 
@@ -380,6 +426,9 @@
     audioEl.addEventListener("ended", () => {
       if (micStream || scriptNode) {
         stopSinging();
+      } else if (pitchTrack.length) {
+        // If the track ended while just previewing, snap chart to the end.
+        drawPitchTrack(pitchTrack, audioEl.duration || 0);
       }
     });
   }
