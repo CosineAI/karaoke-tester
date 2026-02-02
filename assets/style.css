@@ -152,6 +152,17 @@ button {
   box-shadow: 0 2px 6px rgba(37,99,235,0.35);
 }
 
+button.secondary-btn {
+  margin-left: 0.6rem;
+  background: #e5e7eb;
+  color: #111827;
+  box-shadow: none;
+}
+
+button.secondary-btn:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
 button:disabled {
   background: #9ca3af;
   box-shadow: none;

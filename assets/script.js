@@ -6,6 +6,7 @@
 
 (function () {
   const fileInput = document.getElementById('audio-file');
+  const demoBtn = document.getElementById('demo-btn');
   const analyzeBtn = document.getElementById('analyze-btn');
   const playBtn = document.getElementById('play-btn');
   const stopBtn = document.getElementById('stop-btn');
@@ -48,6 +49,11 @@
   // Scoring (generous)
   let totalFrames = 0;
   let hitFrames = 0;
+
+  const DEMO_SONG = {
+    url: 'https://samplelib.com/lib/preview/mp3/sample-15s.mp3',
+    label: 'SampleLib 15s demo (instrumental)'
+  };
 
   function formatTime(sec) {
     if (!isFinite(sec)) return '00:00';
@@ -465,15 +471,9 @@
 
   // --- Event wiring --------------------------------------------------------
 
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-
-    analysisStatus.textContent = 'Loading file…';
-
+  async function loadFromArrayBuffer(arrayBuffer, labelForStatus) {
     try {
       const ac = ensureAudioContext();
-      const arrayBuffer = await file.arrayBuffer();
       audioBuffer = await ac.decodeAudioData(arrayBuffer);
       songDuration = audioBuffer.duration;
       analyzeBtn.disabled = false;
@@ -485,13 +485,28 @@
       seekSlider.max = String(songDuration);
       seekSlider.value = '0';
       timeLabel.textContent = `00:00 / ${formatTime(songDuration)}`;
-      analysisStatus.textContent = 'File loaded. Click "Analyse track" to build the melody chart.';
+      analysisStatus.textContent = `${labelForStatus} Click "Analyse track" to build the melody chart.`;
       melodyPoints = [];
       melodyMap = new Map();
       resetScore();
     } catch (err) {
       console.error(err);
-      analysisStatus.textContent = 'Could not decode audio file.';
+      analysisStatus.textContent = 'Could not decode audio data.';
+    }
+  }
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    analysisStatus.textContent = 'Loading file…';
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      await loadFromArrayBuffer(arrayBuffer, 'File loaded.');
+    } catch (err) {
+      console.error(err);
+      analysisStatus.textContent = 'Could not read audio file.';
     }
   });
 
@@ -546,6 +561,21 @@
     } else {
       updateTimeUI();
       drawChartFrame();
+    }
+  });
+
+  demoBtn.addEventListener('click', async () => {
+    analysisStatus.textContent = `Loading demo song: ${DEMO_SONG.label}…`;
+    try {
+      const res = await fetch(DEMO_SONG.url);
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+      const arrayBuffer = await res.arrayBuffer();
+      await loadFromArrayBuffer(arrayBuffer, `Demo song loaded (${DEMO_SONG.label}).`);
+    } catch (err) {
+      console.error(err);
+      analysisStatus.textContent = 'Could not load demo song (maybe blocked). Try uploading a local file instead.';
     }
   });
 
