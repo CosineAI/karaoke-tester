@@ -30,6 +30,10 @@
     hitFrames: 0,
   };
 
+  // Live mic feedback
+  let currentMicMidi = null;
+  let currentMicIsHit = false;
+
   let objectUrl = null;
 
   function setStatus(text, isError) {
@@ -145,9 +149,7 @@
       return;
     }
 
-    const firstTime = track[0].time;
     const lastTime = track[track.length - 1].time;
-    const totalDuration = Math.max(1, lastTime - firstTime);
 
     let minMidi = Infinity;
     let maxMidi = -Infinity;
@@ -161,10 +163,13 @@
     }
 
     const padding = 20;
+    const windowSeconds = 5;
+    const visibleStart = currentTime;
+    const visibleEnd = Math.min(currentTime + windowSeconds, lastTime);
     const viewWidth = w - 2 * padding;
-    const pxPerSecond = viewWidth / totalDuration;
+    const pxPerSecond = viewWidth / windowSeconds;
 
-    // Vertical grid lines (simple time markers)
+    // Axes
     ctx.strokeStyle = "rgba(148,163,184,0.5)";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -173,9 +178,8 @@
     ctx.lineTo(w - padding, h - padding);
     ctx.stroke();
 
-    // Scrolling melody: keep "now" near the left so you see what's coming.
-    const nowX = padding + viewWidth * 0.18;
-    const offsetX = nowX - currentTime * pxPerSecond;
+    // "Now" is the left edge of the window; show the next 5s to the right.
+    const nowX = padding;
 
     ctx.strokeStyle = "#2563eb";
     ctx.lineWidth = 2;
@@ -183,10 +187,10 @@
 
     let started = false;
     track.forEach((p) => {
-      const x = offsetX + p.time * pxPerSecond;
-      if (x < padding - 5 || x > w - padding + 5) {
+      if (p.time < visibleStart - 0.05 || p.time > visibleEnd + 0.05) {
         return;
       }
+      const x = padding + (p.time - visibleStart) * pxPerSecond;
       const y =
         h -
         padding -
@@ -202,12 +206,33 @@
     ctx.stroke();
 
     // Playhead showing "this is what you should sing right now".
-    ctx.strokeStyle = "rgba(15,23,42,0.55)";
+    ctx.strokeStyle = "rgba(15,23,42,0.75)";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(nowX, padding);
     ctx.lineTo(nowX, h - padding);
     ctx.stroke();
+
+    // Mic pitch indicator at the playhead.
+    if (currentMicMidi != null) {
+      const micY =
+        h -
+        padding -
+        ((currentMicMidi - minMidi) / Math.max(1, maxMidi - minMidi)) * (h - 2 * padding);
+
+      const radius = 6;
+      ctx.beginPath();
+      ctx.arc(nowX, micY, radius + 2, 0, Math.PI * 2);
+      ctx.fillStyle = currentMicIsHit
+        ? "rgba(34,197,94,0.32)" // green glow when on target
+        : "rgba(239,68,68,0.22)"; // red glow otherwise
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(nowX, micY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = currentMicIsHit ? "#16a34a" : "#dc2626";
+      ctx.fill();
+    }
   }
 
   function handleFileChange() {
@@ -331,18 +356,29 @@
     scriptNode.onaudioprocess = (event) => {
       const input = event.inputBuffer.getChannelData(0);
       const freq = detectPitch(input, ac.sampleRate);
-      if (!freq) return;
+      if (!freq) {
+        currentMicMidi = null;
+        currentMicIsHit = false;
+        return;
+      }
 
       const midi = freqToMidi(freq);
       const time = audioEl.currentTime;
       const targetMidi = getTargetMidiAtTime(time);
-      if (targetMidi == null) return;
+      if (targetMidi == null) {
+        currentMicMidi = null;
+        currentMicIsHit = false;
+        return;
+      }
 
       const diff = Math.abs(midi - targetMidi);
       const toleranceSemitones = 1.8;
 
       scoring.totalFrames += 1;
       if (diff <= toleranceSemitones) scoring.hitFrames += 1;
+
+      currentMicMidi = midi;
+      currentMicIsHit = diff <= toleranceSemitones;
     };
 
     micSource.connect(scriptNode);
