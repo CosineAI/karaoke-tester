@@ -51,8 +51,10 @@
   let hitFrames = 0;
 
   const DEMO_SONG = {
-    url: 'assets/The Weeknd - Blinding Lights (Official Audio).mp3',
-    label: 'Local demo: The Weeknd - Blinding Lights (file in assets folder)'
+    // Royalty-free vocal track hosted on Pixabay (AI generated, free for use).
+    // If this fails due to CORS in your environment, you can still upload local files.
+    url: 'https://cdn.pixabay.com/download/audio/2025/03/24/audio_317362_2b4a9d7c1b.mp3?filename=eternal-light-vocal-317362.mp3',
+    label: 'Pixabay demo: Eternal Light (vocal)'
   };
 
   function formatTime(sec) {
